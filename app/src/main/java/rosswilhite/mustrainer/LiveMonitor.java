@@ -21,7 +21,7 @@ public class LiveMonitor extends Activity {
 
 
     private int SampleRateInHz = 48000; // the sample rate expressed in Hertz. Usually 44.1k
-//    private int channelConfig = AudioFormat.CHANNEL_IN_MONO;  //describes the configuration of the audio channels
+    private int channelConfig = AudioFormat.CHANNEL_IN_MONO;  //describes the configuration of the audio channels
 //    private int audioFormat;    //the format in which the audio data is to be returned
     private int minBufferSize; //total size in bytes of buffer
 
@@ -56,7 +56,7 @@ public class LiveMonitor extends Activity {
 
     public LiveMonitor(){
        SampleRateInHz = 48000;
-        //channelConfig = AudioFormat.CHANNEL_IN_MONO;
+        channelConfig = AudioFormat.CHANNEL_IN_MONO;
         //audioFormat = AudioFormat.ENCODING_PCM_16BIT;
         //minBufferSize = AudioRecord.getMinBufferSize(SampleRateInHz,channelConfig,audioFormat);
         minBufferSize = 1024;
