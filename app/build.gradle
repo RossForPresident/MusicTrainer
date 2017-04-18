@@ -1,0 +1,66 @@
+apply plugin: 'com.android.application'
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def superpowered_sdk_path = properties.getProperty('superpowered.dir')
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "25.0.2"
+    defaultConfig {
+        applicationId "rosswilhite.mustrainer"
+        minSdkVersion 16
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64' // these platforms cover 99% percent of all Android devices
+        }
+
+        /*externalNativeBuild {
+            ndkBuild {
+                path '../../../superpowered/SuperpoweredSDK/SuperpoweredSpatializer/Android/jni/Android.mk'
+            }
+        }*/
+        externalNativeBuild {
+            cmake {
+                arguments '-DANDROID_PLATFORM=android-16', '-DANDROID_TOOLCHAIN=clang', '-DANDROID_ARM_NEON=TRUE', '-DANDROID_STL=gnustl_static', "-DPATH_TO_SUPERPOWERED:STRING=${superpowered_sdk_path}"
+                cFlags '-O3', '-fsigned-char' // full optimization, char data type is signed
+                cppFlags '-fsigned-char', "-I${superpowered_sdk_path}"
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            debuggable true
+        }
+    }
+
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jni']
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path 'src/main/jni/CMakeLists.txt'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:25.2.0'
+    testCompile 'junit:junit:4.12'
+}
