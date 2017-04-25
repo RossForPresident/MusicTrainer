@@ -475,9 +475,12 @@ public class Trainer extends AppCompatActivity {
         mFileName = getExternalCacheDir().getAbsolutePath();
         mFileName += "/audiorecordtest.3gp";
 
-
-        ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)
+                    != PackageManager.PERMISSION_GRANTED)
+                        //requestPermissions(Manifest.permission.RECORD_AUDIO);
+            ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
+        }
         //LinearLayout ll = new LinearLayout(this);
        // LiveButton LiveB = (LiveButton) findViewById(R.id.tunerButton);
         RelativeLayout R1 = (RelativeLayout) findViewById(R.id.activity_trainer);

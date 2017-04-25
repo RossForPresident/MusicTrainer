@@ -2,16 +2,20 @@ package rosswilhite.mustrainer;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.Service;
+import android.content.Context;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.os.Bundle;
 
 import rosswilhite.mustrainer.Complex;
 import rosswilhite.mustrainer.FFT;
 import rosswilhite.mustrainer.UIupdateListener;
 
-public class LiveMonitor extends Activity {
+public class LiveMonitor extends Service {
 
 
     //TextView mvuMeter = null;
@@ -55,12 +59,12 @@ public class LiveMonitor extends Activity {
 
 
     public LiveMonitor(){
-       SampleRateInHz = 48000;
+
         channelConfig = AudioFormat.CHANNEL_IN_MONO;
         //audioFormat = AudioFormat.ENCODING_PCM_16BIT;
         //minBufferSize = AudioRecord.getMinBufferSize(SampleRateInHz,channelConfig,audioFormat);
-        minBufferSize = 1024;
-
+        minBufferSize = 512;
+        SampleRateInHz = 44100;
         UIupdater = null;
         //setContentView(R.layout.activity_trainer);
     }
@@ -73,6 +77,15 @@ public class LiveMonitor extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        String samplerateString = null, buffersizeString = null;
+        if (Build.VERSION.SDK_INT >= 17) {
+            AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
+            samplerateString = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
+            buffersizeString = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
+        }
+        if (samplerateString != null) SampleRateInHz = Integer.parseInt(samplerateString);
+        if (buffersizeString != null) minBufferSize = Integer.parseInt(buffersizeString);;
+
         // setContentView(R.layout.activity_trainer);
 
     }
