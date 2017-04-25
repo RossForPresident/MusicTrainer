@@ -15,14 +15,7 @@ import rosswilhite.mustrainer.Complex;
 import rosswilhite.mustrainer.FFT;
 import rosswilhite.mustrainer.UIupdateListener;
 
-public class LiveMonitor extends Service {
-
-
-    //TextView mvuMeter = null;
-    private Thread recordingThread = null;
-    private UIupdateListener UIupdater = null;
-    private FFT fftest = null;
-
+public class LiveMonitor{
 
     private int SampleRateInHz = 48000; // the sample rate expressed in Hertz. Usually 44.1k
     private int channelConfig = AudioFormat.CHANNEL_IN_MONO;  //describes the configuration of the audio channels
@@ -65,26 +58,13 @@ public class LiveMonitor extends Service {
         //minBufferSize = AudioRecord.getMinBufferSize(SampleRateInHz,channelConfig,audioFormat);
         minBufferSize = 512;
         SampleRateInHz = 44100;
-        UIupdater = null;
-        //setContentView(R.layout.activity_trainer);
-    }
-
-    public void setUIListener(UIupdateListener UIupdate){
-        UIupdater = UIupdate;
     }
 
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        String samplerateString = null, buffersizeString = null;
-        if (Build.VERSION.SDK_INT >= 17) {
-            AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
-            samplerateString = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
-            buffersizeString = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
-        }
-        if (samplerateString != null) SampleRateInHz = Integer.parseInt(samplerateString);
-        if (buffersizeString != null) minBufferSize = Integer.parseInt(buffersizeString);;
+    public void setUp(int sampleRateHz, int bufferSize) {
+      //  super.onCreate(savedInstanceState);
+        SampleRateInHz = sampleRateHz;
+        minBufferSize = bufferSize;
 
         // setContentView(R.layout.activity_trainer);
 
@@ -102,25 +82,32 @@ public class LiveMonitor extends Service {
         return d;
     }
     public double getMonitorHz(){
-        double d = monitorHZ;
-        monitorHZ = 0;
-        return d;
+        monitorHZ = getHzField();
+        return monitorHZ;
     }
     public double getMonitorPitch() {
-        double d = monitorPitch;
-        monitorPitch = 0;
-        return d;
+        monitorPitch = Math.round(12*(Math.log(monitorHZ/261.626))/Math.log(2));
+        monitorPitch += 48;
+        while (monitorPitch >= 12){
+            monitorPitch -= 12;
+            monitorOct++;
+        }
+        while (monitorPitch < 0){
+            monitorPitch += 12;
+            monitorOct--;
+        }
+
+        return monitorPitch;
     }
     public int getMonitorOct() {
-        int d = monitorOct;
-        monitorOct = 0;
-        return d;
+        return monitorOct;
     }
 
     public double getCentsSharp() {
-        double d = centsSharp;
-        centsSharp = 0;
-        return d;
+        double nearestHZ = (Math.pow(2,((monitorPitch-(12*monitorOct))/12)))*261.626;
+        centsSharp = 1200 * Math.log( monitorHZ / nearestHZ ) / Math.log( 2.0 );
+
+        return centsSharp;
     }
 
 
@@ -137,8 +124,6 @@ public class LiveMonitor extends Service {
     }
 
     private void startMonitoring() {
-
-        // mvuMeter = (TextView) findViewById(R.id.vuMeter);
         monitorPeak = 0;
         nmonitorPeak = 0;
         /*
@@ -173,15 +158,8 @@ public class LiveMonitor extends Service {
             noteNameTable[index] = pitchlist[i%12];
             pitchTable[index] = pitch;
         }*/
-        StartRec(SampleRateInHz, minBufferSize, maxHZ);
 
-        isRecording = true;
-        recordingThread = new Thread(new Runnable() {
-            public void run() {
-                monitorAudio();
-            }
-        }, "LiveTuner Thread");
-        recordingThread.start();
+        StartRec(SampleRateInHz, minBufferSize, maxHZ);
     }
 
     public static double[] short2double(short[] pcms) {
@@ -192,93 +170,10 @@ public class LiveMonitor extends Service {
         return doublers;
     }
 
-    public void monitorAudio(){
-        short sData[] = new short[BufferElements];
-        double[] dData = new double[BufferElements];
-        boolean isPositive = true;
-
-        while (isRecording){
-            int crosses = 0;
-            int octave = 0;
-            //monitorPitch = 0;
-            //monitorOct = 0;
-
-            //while(updating){}
-//            dData = short2double(sData);
-
-           /* Complex[] fftTempArray = new Complex[BufferElements];
-            for (int i=0; i<BufferElements; i++)
-            {
-                fftTempArray[i] = new Complex(dData[i], 0);
-            }
-            Complex[] fftArray = FFT.fft(fftTempArray);
-            double[] Abs = new double[BufferElements/2];
-
-            double mMaxFFTSample = 0.0;
-            int mPeakPos = 0;
-            for(int i = 0; i < (BufferElements/2); i++)
-            {
-                Abs[i] = Math.sqrt(Math.pow(fftArray[i].re(), 2) + Math.pow(fftArray[i].im(), 2));
-                if(Abs[i] > mMaxFFTSample)
-                {
-                    mMaxFFTSample = Abs[i];
-                    mPeakPos = i;
-                }
-            }
-
-            /*for (int i = 0; i < sData.length; i++){
-                if (isPositive && sData[i] < 0){
-                    crosses++;
-                    isPositive = false;
-                }
-                if (sData[i] > 0){
-                    isPositive = true;
-                }
-                if (sData[i] > monitorPeak)
-                    monitorPeak = sData[i];
-                if (sData[i] < nmonitorPeak)
-                    nmonitorPeak = sData[i];
-            }*/
-            //monitorHZ = (double)((double)crosses * (double)(SampleRateInHz/sData.length));
-//            monitorHZ = freqTable[mPeakPos];
-            monitorHZ = getHzField();
-            monitorPitch = Math.round(12*(Math.log(monitorHZ/261.626))/Math.log(2));
-            monitorPitch += 48;
-            while (monitorPitch >= 12){
-                monitorPitch -= 12;
-                monitorOct++;
-            }
-            while (monitorPitch < 0){
-                monitorPitch += 12;
-                monitorOct--;
-            }
-/*
-            int nearestNoteDelta=0;
-
-            while( true ) {
-                if( nearestNoteDelta < mPeakPos && noteNameTable[mPeakPos-nearestNoteDelta] != null ) {
-                    nearestNoteDelta = -nearestNoteDelta;
-                    break;
-                } else if( nearestNoteDelta + mPeakPos < BufferElements && noteNameTable[mPeakPos+nearestNoteDelta] != null ) {
-                    break;
-                }
-                ++nearestNoteDelta;
-            }
-            String nearestPitch = noteNameTable[mPeakPos+nearestNoteDelta];
-            double nearestHZ = pitchTable[mPeakPos+nearestNoteDelta];*/
-            double nearestHZ = (Math.pow(2,((monitorPitch-(12*monitorOct))/12)))*261.626;
-            centsSharp = 1200 * Math.log( monitorHZ / nearestHZ ) / Math.log( 2.0 );
-            //updateView();
-            updating = true;
-            UIupdater.updateUI();
-
-        }
-    }
 
     private void stopMonitoring() {
         isRecording = false;
         StopRec();
-        recordingThread = null;
     }
 
     public native void StartRec(int samplerate,int buffersize, double HzHi);
