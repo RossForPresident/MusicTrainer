@@ -45,43 +45,6 @@
         android:layout_above="@id/monOct"
         android:layout_toLeftOf="@id/monHZ" />
 
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:srcCompat="@android:drawable/presence_invisible"
-        android:id="@+id/TunerDot"
-        android:layout_centerVertical="true"
-        android:layout_toRightOf="@+id/cents"
-        android:layout_marginLeft="2dp"/>
-
-    <TextView
-        android:text="In Tune"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/IntonationLabeln"
-        android:layout_alignTop="@id/cents"
-        android:layout_toRightOf="@id/cents"
-        android:layout_toEndOf="@id/cents"
-        android:layout_marginLeft="20dp" />
-
-    <TextView
-        android:text="Sharp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/IntonationLabels"
-        android:layout_alignLeft="@+id/IntonationLabeln"
-        android:layout_above="@+id/IntonationLabeln"
-        android:layout_marginBottom="60dp" />
-
-    <TextView
-        android:text="Flat"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/IntonationLabelf"
-        android:layout_alignLeft="@+id/IntonationLabeln"
-        android:layout_below="@+id/IntonationLabeln"
-        android:layout_marginTop="60dp" />
-
     <TextView
         android:text="0 cents"
         android:layout_width="70dp"
@@ -91,5 +54,23 @@
         android:layout_marginLeft="5dp"
         android:gravity="right"
         android:id="@+id/cents" />
+
+    <SeekBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:id="@+id/Sensbar"
+        style="@style/Widget.AppCompat.SeekBar"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:text="0"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/Sensbar"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/ThreshMon" />
 
 </RelativeLayout>

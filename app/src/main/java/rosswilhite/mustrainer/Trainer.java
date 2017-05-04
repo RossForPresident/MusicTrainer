@@ -26,6 +26,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.media.AudioRecord;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.ImageView;
 import rosswilhite.mustrainer.LiveMonitor;
@@ -37,15 +38,26 @@ import static android.R.attr.layout_below;
 import java.io.IOException;
 
 public class Trainer extends AppCompatActivity {
+
+
+    static{
+
+        System.loadLibrary("Superpoweredlib");
+    }
+
     private static String pitchlist[] = {"C","C#/Db","D","D#/Eb","E","F","F#/Gb","G","G#/Ab","A","A#/Bb","B"};
 
 
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
     private static String mFileName = null;
 
+    private int SampleRateInHz = 44100;
+    private int minBufferSize = 512;
+    private double maxHZ = 1500;
+
     private LiveButton mLiveButton = null;
-    private LiveMonitor mLiveMonitor = null;
-    private Thread UIUpdater = null;
+    //private LiveMonitor mLiveMonitor = null;
+    private Thread TunerThread = null;
    // private int MonitorAmp = 0;
 
     private boolean permissionToRecordAccepted = false;
@@ -68,91 +80,95 @@ public class Trainer extends AppCompatActivity {
        return Math.round(d*(10^i)) / 10^i;
     }
 
-    public void updateView(){
+    private void updater(double HZ,float th){
+        final double hz = HZ;
+        final float thr = th;
+        Thread UIThread = new Thread(new Runnable() {
+            public void run() {
+                updateView(hz,thr);
+            }
+        }, "UI Thread");
+        UIThread.start();
+    }
+    private void updateView(double HZ, float th){
 
+
+        //final double monitorHZ = getHzField();
+        final double monitorHZ = HZ;
+        final float thr = th;
 
         //final boolean isdrawing = true;
         runOnUiThread(new Runnable() {
         @Override
         public void run() {
 
-            if (monitoring){
-            TextView monHz = (TextView) findViewById(R.id.monHZ);
-                if (monHz == null)
-                    Log.d("D","Frequency Monitor is uninitialized.");
-            monHz.setText(String.format("{0} Hz",mLiveMonitor.getMonitorHz()));
+            final TextView thresh = (TextView)findViewById(R.id.ThreshMon);
+            if (thresh == null)
+                Log.d("D", "Threshold Monitor is uninitialized.");
+            else
+            thresh.setText(String.format("%1$.3f", thr));
+            if (monitoring && monitorHZ > 0) {
+                double monitorPitch = Math.round(12 * (Math.log(monitorHZ / 261.626)) / Math.log(2));
+                monitorPitch += 48;
+                int monitorOct = 0;
+                while (monitorPitch >= 12) {
+                    monitorPitch -= 12;
+                    monitorOct++;
+                }
+                while (monitorPitch < 0) {
+                    monitorPitch += 12;
+                    monitorOct--;
+                }
+                String pitch = pitchlist[(int) monitorPitch];
+                double nearestHZ = (Math.pow(2, (((monitorPitch + (12 * monitorOct)) - 48) / 12))) * 261.626;
+                double centsSharp = 1200 * Math.log(monitorHZ / nearestHZ) / Math.log(2.0);
 
-                final String pitch = pitchlist[(int)mLiveMonitor.getMonitorPitch()];
+                TextView monHz = (TextView) findViewById(R.id.monHZ);
+                if (monHz == null)
+                    Log.d("D", "Frequency Monitor is uninitialized.");
+                else
+                monHz.setText(String.format("%1$.2f Hz", monitorHZ));
 
                 TextView monPitch = (TextView) findViewById(R.id.monPitch);
                 if (monPitch == null)
-                    Log.d("D","Pitch Monitor is uninitialized.");
+                    Log.d("D", "Pitch Monitor is uninitialized.");
+                monPitch.setTextColor(Color.argb(255, 100 + (int) ((Math.abs(centsSharp) / 40)) * 100, 100, 100));
+                if (centsSharp < 7 && centsSharp > -7) {
+                    monPitch.setTextColor(Color.GREEN);
+                }
                 monPitch.setText(pitch);
 
-            TextView monOct = (TextView) findViewById(R.id.monOct);
+                TextView monOct = (TextView) findViewById(R.id.monOct);
                 if (monOct == null)
-                    Log.d("D","Octave Monitor is uninitialized.");
-            monOct.setText(String.format("{0}",mLiveMonitor.getMonitorOct()));
+                    Log.d("D", "Octave Monitor is uninitialized.");
+                monOct.setText(String.format("%1$d", monitorOct));
 
-
-            //TextView sharp = (TextView) findViewById(R.id.IntonationLabels);
-            //TextView flat = (TextView) findViewById(R.id.IntonationLabelf);
-            //TextView natural = (TextView) findViewById(R.id.IntonationLabeln);
-            TextView centsview = (TextView) findViewById(R.id.cents);
-           // ImageView tunerDot = (ImageView) findViewById(R.id.TunerDot);
-            double cents = roundDouble(mLiveMonitor.getCentsSharp(),2);
-            centsview.setText(String.format("{0} cents",Double.toString(cents)));
-            /*if (cents > 20){
-                sharp.setVisibility(View.VISIBLE);
-                natural.setVisibility(View.INVISIBLE);
-                flat.setVisibility(View.INVISIBLE);
-                tunerDot.setColorFilter(Color.RED);
-                tunerDot.setPadding(0,0,0,(int)cents*4);
-            }
-            else if (cents < -20){
-                sharp.setVisibility(View.INVISIBLE);
-                natural.setVisibility(View.INVISIBLE);
-                flat.setVisibility(View.VISIBLE);
-                tunerDot.setColorFilter(Color.RED);
-                tunerDot.setPadding(0,-(int)cents*4,0,0);
+                TextView centsview = (TextView) findViewById(R.id.cents);
+                double cents = roundDouble(centsSharp, 2);
+                centsview.setText(String.format("%s cents", Double.toString(cents)));
             }
             else {
-                sharp.setVisibility(View.INVISIBLE);
-                natural.setVisibility(View.VISIBLE);
-                flat.setVisibility(View.INVISIBLE);
-                tunerDot.setColorFilter(Color.GREEN);
-                tunerDot.setPadding(0,0,0,0);
-
-            }*/}
-            {
                 TextView monHz = (TextView) findViewById(R.id.monHZ);
-                monHz.setText("0 Hz");
+                if (monHz == null)
+                    Log.d("D","Frequency Monitor is uninitialized.");
+                else
+                    monHz.setText("0 Hz");
 
                 TextView monOct = (TextView) findViewById(R.id.monOct);
+                if (monHz == null)
+                    Log.d("D","Octave Monitor is uninitialized.");
+                else
                 monOct.setText("0");
 
                 TextView monPitch = (TextView) findViewById(R.id.monPitch);
+                if (monHz == null)
+                    Log.d("D","Pitch Monitor is uninitialized.");
+                else
                 monPitch.setText("0");
-
-               // TextView sharp = (TextView) findViewById(R.id.IntonationLabels);
-                //TextView flat = (TextView) findViewById(R.id.IntonationLabelf);
-                //TextView natural = (TextView) findViewById(R.id.IntonationLabeln);
-                TextView centsview = (TextView) findViewById(R.id.cents);
-                ImageView tunerDot = (ImageView) findViewById(R.id.TunerDot);
-                centsview.setText("0 cents");
-                //    sharp.setVisibility(View.INVISIBLE);
-                //    natural.setVisibility(View.INVISIBLE);
-                //    flat.setVisibility(View.INVISIBLE);
-                    tunerDot.setColorFilter(Color.RED);
-                    tunerDot.setPadding(0,0,0,0);
             }
-
-            mLiveMonitor.validateUpdate();
 
         }
     });
-        //TextView mvuMeter = (TextView) findViewById(R.id.vuMeter);
-      //  mvuMeter.setText(Double.toString(mLiveMonitor.getLatestMonitorLevel()));
     }
 
 
@@ -162,16 +178,18 @@ public class Trainer extends AppCompatActivity {
 
         OnClickListener clicker = new OnClickListener() {
             public void onClick(View v) {
-                if (!monitoring) {
+                monitoring = !monitoring;
+                if (monitoring) {
                     setText("Stop tuner");
                     //mvuMeter.setText
+                    TunerThread.start();
+                    //StartRec(SampleRateInHz, minBufferSize, maxHZ);
 
                 } else {
                     setText("Start tuner");
+                    StopRec();
                 }
-                monitoring = !monitoring;
-                UIUpdater.start();
-                mLiveMonitor.onMonitor(!monitoring);
+             //   UIUpdater.start();
             }
         };
 
@@ -183,9 +201,6 @@ public class Trainer extends AppCompatActivity {
     }
 
 
-   /* public interface UIupdateListener {
-    public void onObjectReady(String title);
-    }*/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -206,7 +221,7 @@ public class Trainer extends AppCompatActivity {
        // LiveButton LiveB = (LiveButton) findViewById(R.id.tunerButton);
         RelativeLayout R1 = (RelativeLayout) findViewById(R.id.activity_trainer);
         mLiveButton = new LiveButton(this);
-        mLiveMonitor = new LiveMonitor();
+     //   mLiveMonitor = new LiveMonitor();
 
         String samplerateString = null, buffersizeString = null;
         if (Build.VERSION.SDK_INT >= 17) {
@@ -214,9 +229,9 @@ public class Trainer extends AppCompatActivity {
             samplerateString = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE);
             buffersizeString = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
         }
-        if (samplerateString == null) samplerateString = "44100";
-        if (buffersizeString == null) buffersizeString = "512";
-        mLiveMonitor.setUp(Integer.parseInt(samplerateString),Integer.parseInt(buffersizeString));
+        if (samplerateString != null) SampleRateInHz = Integer.parseInt(samplerateString);
+        if (buffersizeString != null) minBufferSize = Integer.parseInt(buffersizeString);
+      //  mLiveMonitor.setUp(Integer.parseInt(samplerateString),Integer.parseInt(buffersizeString));
 
         RelativeLayout.LayoutParams MonBParams = new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -224,17 +239,30 @@ public class Trainer extends AppCompatActivity {
         MonBParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
         //MonBParams.addRule(android:layout_below,android"@id/vuMeter");
         R1.addView(mLiveButton,MonBParams);
-        setContentView(R1);
-        updateView();
-
-        UIUpdater = new Thread(new Runnable() {
-            public void run() {
-                while (monitoring) {
-                    updateView();
-                }
+        final SeekBar crossfader = (SeekBar)findViewById(R.id.Sensbar);
+        if (crossfader != null) crossfader.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                onThresh(progress);
             }
-        }, "UI Updater Thread");
-        UIUpdater.start();
+
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+        setContentView(R1);
+        updateView(0,0);
+
+        TunerThread = new Thread(new Runnable() {
+            public void run() {
+                StartRec(SampleRateInHz, 2400, maxHZ);
+            }
+        }, "Tuner Thread");
+       // UIUpdater.start();
     }
 
+    public native void StartRec(int samplerate,int buffersize, double HzHi);
+    public native void StopRec();
+    public native void update(int samplerate,int buffersize, double HzHi);
+    public native void GetStatus();
+    public native double getHzField();
+    private native void onThresh(int value);
 }

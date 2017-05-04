@@ -1,19 +1,8 @@
 package rosswilhite.mustrainer;
 
-import android.app.Activity;
-import android.app.Fragment;
-import android.app.Service;
-import android.content.Context;
 import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioRecord;
-import android.media.MediaRecorder;
-import android.os.Build;
-import android.os.Bundle;
 
-import rosswilhite.mustrainer.Complex;
-import rosswilhite.mustrainer.FFT;
-import rosswilhite.mustrainer.UIupdateListener;
+
 
 public class LiveMonitor{
 
@@ -126,39 +115,6 @@ public class LiveMonitor{
     private void startMonitoring() {
         monitorPeak = 0;
         nmonitorPeak = 0;
-        /*
-        livetrainer = new AudioRecord(audioSource, SampleRateInHz, channelConfig,
-                audioFormat, BufferElements * ElementSize);
-        livetrainer.setRecordPositionUpdateListener(monitoring);
-        livetrainer.setPositionNotificationPeriod(4410);
-
-        if (livetrainer.getState() == AudioRecord.STATE_UNINITIALIZED) {
-            //  Log.e(LOG_TAG, "startMonitoring() failed");
-        }
-        */
-
-       /* for  (int i = 0; i < BufferElements; i++){
-            noteNameTable[i] = null;
-            pitchTable[i] = -1;
-            freqTable[i] = (SampleRateInHz * i ) / ( BufferElements);
-        }
-        for (int i = 0; i<127; i++) {
-            double pitch =  (440.0 / 32.0) *  Math.pow(2, (i - 9.0) / 12.0);
-            if (pitch > SampleRateInHz / 2.0)
-                break;
-
-            double min = 10000000000.0;
-            int index = -1;
-            for (int j = 0; j < BufferElements; j++) {
-                if (Math.abs(freqTable[j] - pitch) < min) {
-                    min = Math.abs(freqTable[j] - pitch);
-                    index = j;
-                }
-            }
-            noteNameTable[index] = pitchlist[i%12];
-            pitchTable[index] = pitch;
-        }*/
-
         StartRec(SampleRateInHz, minBufferSize, maxHZ);
     }
 
