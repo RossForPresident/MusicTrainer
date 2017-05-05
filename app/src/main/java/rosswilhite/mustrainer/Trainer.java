@@ -1,10 +1,8 @@
 package rosswilhite.mustrainer;
 
-import android.app.Activity;
 import java.lang.Math;
-import android.app.Fragment;
+
 import android.graphics.Color;
-import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
@@ -12,30 +10,15 @@ import android.os.Bundle;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.media.AudioRecord;
-import android.media.MediaPlayer;
-import android.media.MediaRecorder;
-import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.LinearLayout;
-import android.media.AudioRecord;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.ImageView;
-import rosswilhite.mustrainer.LiveMonitor;
-
-
-
-import static android.R.attr.layout_below;
-
-import java.io.IOException;
 
 public class Trainer extends AppCompatActivity {
 
@@ -182,12 +165,14 @@ public class Trainer extends AppCompatActivity {
                 if (monitoring) {
                     setText("Stop tuner");
                     //mvuMeter.setText
+                    //StartRec(SampleRateInHz, 2400, maxHZ);
                     TunerThread.start();
                     //StartRec(SampleRateInHz, minBufferSize, maxHZ);
 
                 } else {
                     setText("Start tuner");
                     StopRec();
+                   // TunerThread.stop();
                 }
              //   UIUpdater.start();
             }
@@ -253,7 +238,7 @@ public class Trainer extends AppCompatActivity {
 
         TunerThread = new Thread(new Runnable() {
             public void run() {
-                StartRec(SampleRateInHz, 2400, maxHZ);
+                StartRec(SampleRateInHz, 4800, maxHZ);
             }
         }, "Tuner Thread");
        // UIUpdater.start();
@@ -261,7 +246,7 @@ public class Trainer extends AppCompatActivity {
 
     public native void StartRec(int samplerate,int buffersize, double HzHi);
     public native void StopRec();
-    public native void update(int samplerate,int buffersize, double HzHi);
+    public native void update(int buffersize, double HzHi);
     public native void GetStatus();
     public native double getHzField();
     private native void onThresh(int value);
