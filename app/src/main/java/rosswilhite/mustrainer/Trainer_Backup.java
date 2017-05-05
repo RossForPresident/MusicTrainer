@@ -20,7 +20,7 @@ public class Trainer_Backup extends AppCompatActivity {
     private static String mFileName = null;
 
     private LiveButton mLiveButton = null;
-    private LiveMonitor mLiveMonitor = null;
+   // private LiveMonitor mLiveMonitor = null;
    // private int MonitorAmp = 0;
 
     private boolean permissionToRecordAccepted = false;
@@ -40,7 +40,7 @@ public class Trainer_Backup extends AppCompatActivity {
 
     public void updateView(){
         TextView mvuMeter = (TextView) findViewById(R.id.pagename);
-        mvuMeter.setText(Double.toString(mLiveMonitor.getLatestMonitorLevel()));
+   //     mvuMeter.setText(Double.toString(mLiveMonitor.getLatestMonitorLevel()));
     }
 
 
@@ -51,7 +51,7 @@ public class Trainer_Backup extends AppCompatActivity {
 
         OnClickListener clicker = new OnClickListener() {
             public void onClick(View v) {
-                mLiveMonitor.onMonitor(mStartRecording);
+           //     mLiveMonitor.onMonitor(mStartRecording);
                 if (mStartRecording) {
                     setText("Stop tuner");
                     //mvuMeter.setText
@@ -87,7 +87,7 @@ public class Trainer_Backup extends AppCompatActivity {
        // LiveButton LiveB = (LiveButton) findViewById(R.id.tunerButton);
         RelativeLayout R1 = (RelativeLayout) findViewById(R.id.activity_trainer);
         mLiveButton = new LiveButton(this);
-        mLiveMonitor = new LiveMonitor();
+    //    mLiveMonitor = new LiveMonitor();
         RelativeLayout.LayoutParams MonBParams = new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         MonBParams.addRule(RelativeLayout.BELOW,R.id.pagename);

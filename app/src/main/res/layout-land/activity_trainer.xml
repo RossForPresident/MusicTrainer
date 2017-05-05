@@ -10,38 +10,60 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="rosswilhite.mustrainer.Trainer">
 
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="0"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"
-        android:id="@+id/Ampcount" />
+        android:id="@+id/monOct"
+        android:layout_alignRight="@id/pagename"
+        android:layout_marginRight="15dp"
+        android:layout_above="@id/pagename"/>
 
-    <RelativeLayout
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0 HZ"
+        android:id="@+id/monHZ"
+        android:layout_toRightOf="@+id/monOct"
+        android:layout_above="@+id/monOct" />
+
+    <TextView
+        android:text="Tuner."
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/pagename"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="24dp" />
+
+    <TextView
+        android:text="0 cents"
+        android:layout_width="70dp"
+        android:layout_height="wrap_content"
+        android:gravity="right"
+        android:id="@+id/cents"
+        android:layout_above="@+id/monHZ"
+        android:layout_alignLeft="@+id/monHZ"
+        android:layout_alignStart="@+id/monHZ" />
+
+    <TextView
+        android:layout_width="130dp"
+        android:layout_height="wrap_content"
+        android:text="0"
+        android:id="@+id/monPitch"
+        android:textSize="72dp"
+        android:layout_above="@+id/monOct"
+        android:layout_toLeftOf="@+id/monHZ"
+        android:layout_toStartOf="@+id/monHZ" />
+
+    <SeekBar
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/Sensbar"
+        style="@style/Widget.AppCompat.SeekBar"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true">
+        android:layout_alignParentStart="true" />
 
-        <Button
-            android:text="Start Tuner"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/tunerButton"
-            tools:ignore="HardcodedText"
-            android:layout_marginBottom="176dp"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true" />
-
-        <TextView
-            android:text="Trainer."
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="66dp"
-            android:id="@+id/textView2"
-            android:layout_alignTop="@+id/tunerButton"
-            android:layout_centerHorizontal="true" />
-    </RelativeLayout>
 </RelativeLayout>

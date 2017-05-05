@@ -12,13 +12,22 @@ void Difference(Yin* yin, int16_t* buff){
     int16_t tau;
     float delta;
 
-    for (tau = 0; tau < yin->halfBufferSize; tau++){
+   /* for (i = yin->mintau; i < yin->bufferSize; i++){
+        for (tau = yin->mintau; tau <= i && tau <= yin->halfBufferSize; tau++){
+            delta = buff[i - tau] - buff[i];
+            yin->yinBuffer2[tau] += delta * delta;
+        }
+
+    }*/
+
+
+    for (tau = yin->mintau; tau < yin->halfBufferSize; tau++){
 
 
 
         for(i = 0; i < yin->halfBufferSize; i++){
             delta = buff[i] - buff[i + tau];
-            yin->yinBuffer[i] += delta * delta;
+            yin->yinBuffer[tau] += delta * delta;
         }
     }
 
@@ -28,7 +37,8 @@ void Difference(Yin* yin, int16_t* buff){
 void Meannormalized(Yin *yin){
     int16_t tau;
     float Sum = 0;
-    yin->yinBuffer[0] = 1;
+    for (int t = 0; t < (int)yin->Fs/yin->maxHz; t++){
+    yin->yinBuffer[t] = 1;}
 
 
     /* Sum all the values in the autocorellation buffer and nomalise the result, replacing
@@ -139,31 +149,37 @@ float Yin_parabolicInterpolation(Yin *yin, int16_t tauEstimate) {
  * @param bufferSize Length of the audio buffer to analyse
  * @param threshold  Allowed uncertainty (e.g 0.05 will return a pitch with ~95% probability)
  */
-void setYin(Yin *yin, int16_t Sampler, int16_t buffers, float thr){
+void setYin(Yin *yin, int Sampler, int16_t buffers, float thr){
 //void Yin_init(Yin *yin, int16_t bufferSize, float threshold){
     /* Initialise the fields of the Yin structure passed in */
     yin->bufferSize = buffers;
     yin->halfBufferSize = buffers / 2;
     yin->probability = 0.0;
     yin->thresh = thr;
+    yin->Fs = Sampler;
 
     /* Allocate the autocorellation buffer and initialise it to zero */
     yin->yinBuffer = (float *) malloc(sizeof(float)* yin->halfBufferSize);
+    yin->yinBuffer2 = (float *) malloc(sizeof(float)* yin->halfBufferSize);
 
     int16_t i;
     for(i = 0; i < yin->halfBufferSize; i++){
         yin->yinBuffer[i] = 0;
+        yin->yinBuffer2[i] = 0;
     }
 }
 /**
- * Runs the Yin pitch detection algortihm
+ * Runs the Yin pitch detection algorithm
  * @param  yin    Initialised Yin object
  * @param  buffer Buffer of samples to analyse
+ * @param  HzHi Max frequency expected
  * @return        Fundamental frequency of the signal in Hz. Returns -1 if pitch can't be found
  */
-float YinPitch(Yin *yin, int16_t* buffer){
+float YinPitch(Yin *yin, int16_t* buffer, int16_t HzHi){
     int16_t tauEstimate = -1;
     float pitchInHertz = -1;
+    yin->maxHz = HzHi;
+    yin->mintau = (yin->Fs) / (yin->maxHz);
 
     /* Step 1: Calculates the squared difference of the signal with a shifted version of itself. */
     Difference(yin, buffer);
